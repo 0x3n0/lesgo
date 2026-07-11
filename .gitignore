@@ -1,0 +1,8 @@
+result/
+*.log
+*.tmp
+*.out
+full_recon.json
+deep_recon.json
+resume_lesgo.cfg
+lesgo
