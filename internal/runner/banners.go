@@ -12,10 +12,10 @@ const Version = "1.0.0"
 
 // Banner is the ASCII banner for lesgo.
 const Banner = `
-    __    ___ ___ ___ ___
-   / /   / __/ __/ _ / _ \
-  / /__ / _/_\ \/ __/ (_) |
- /____/___/___/\__/\___/
+▜
+▐ █▌▛▘▛▌▛▌
+▐▖▙▖▄▌▙▌▙▌
+      ▄▌
 `
 
 func listAvailableSources() {
@@ -53,5 +53,5 @@ func listAvailableSources() {
 
 func showBanner() {
 	fmt.Fprintf(os.Stderr, "%s\n", Banner)
-	fmt.Fprintf(os.Stderr, "                v%s\n\n", Version)
+	fmt.Fprintf(os.Stderr, "      v%s\n\n", Version)
 }
