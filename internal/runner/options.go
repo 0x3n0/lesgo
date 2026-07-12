@@ -165,6 +165,7 @@ type Options struct {
 	ExcludeSources   goflags.StringSlice
 	OnlyRecursive    bool
 	AllSources       bool
+	FastSources      bool
 	ActiveSubdomain  bool
 	ListSources      bool
 	CaptureSources   bool
@@ -343,6 +344,7 @@ Supports positional domain arguments (like httpx): lesgo domain.com [flags]`)
 		flagSet.StringSliceVarP(&opts.ExcludeSources, "exclude-sources", "es", nil, "sources to exclude from enumeration (-es alienvault)", goflags.NormalizedStringSliceOptions),
 		flagSet.BoolVar(&opts.OnlyRecursive, "recursive", false, "use only sources that can handle subdomains recursively"),
 		flagSet.BoolVar(&opts.AllSources, "all-sources", false, "use all sources for discovery (already default when discovery runs)"),
+			flagSet.BoolVar(&opts.FastSources, "fast", false, "use only the fastest API-based subdomain sources (skips slow scraping sources)"),
 		flagSet.BoolVarP(&opts.ActiveSubdomain, "active", "nW", false, "display active subdomains only (resolve discovered subs)"),
 		flagSet.BoolVarP(&opts.ListSources, "list-sources", "ls", false, "list all available sources"),
 		flagSet.BoolVarP(&opts.CaptureSources, "collect-sources", "cs", false, "include all sources in the output (-json only)"),
@@ -726,7 +728,7 @@ func (o *Options) validateOptions() {
 		gologger.Fatal().Msgf("rate-limit-minute must be non-negative, got %d", o.RateLimitMinute)
 	}
 
-	if o.RunSubdomain() && len(o.Sources) == 0 {
+	if o.RunSubdomain() && len(o.Sources) == 0 && !o.FastSources {
 		o.AllSources = true
 	}
 

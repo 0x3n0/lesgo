@@ -75,6 +75,10 @@ func New(opts Options) (*Engine, error) {
 			if _, ok := specifiedSources[name]; ok {
 				selectedSources = append(selectedSources, source)
 			}
+		} else if opts.FastSources {
+			if isFastSource(name) {
+				selectedSources = append(selectedSources, source)
+			}
 		} else if opts.AllSources {
 			selectedSources = append(selectedSources, source)
 		} else {
@@ -345,4 +349,21 @@ func (e *Engine) ListSources() []string {
 // Close cleans up resources.
 func (e *Engine) Close() {
 	// Nothing to clean up
+}
+
+// fastSources is the set of sources that use fast API calls (no web scraping).
+var fastSources = map[string]bool{
+	"crtsh":        true,
+	"alienvault":   true,
+	"certspotter":  true,
+	"anubis":       true,
+	"bufferover":   true,
+	"threatminer":  true,
+	"urlscan":      true,
+	"hackertarget": true,
+}
+
+// isFastSource returns true if the named source is classified as fast.
+func isFastSource(name string) bool {
+	return fastSources[name]
 }

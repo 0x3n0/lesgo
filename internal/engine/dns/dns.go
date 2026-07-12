@@ -207,7 +207,7 @@ func (e *Engine) Query(host string) *Result {
 			case *dns.TXT:
 				result.TXT = append(result.TXT, strings.Join(r.Txt, " "))
 			case *dns.SOA:
-				result.SOA = append(result.SOA, r.Ns, r.Mbox)
+				result.SOA = append(result.SOA, fmt.Sprintf("ns=%s mbox=%s", r.Ns, r.Mbox))
 			case *dns.PTR:
 				result.PTR = append(result.PTR, r.Ptr)
 			case *dns.CAA:

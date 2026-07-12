@@ -7,6 +7,7 @@ type Options struct {
 	Sources         []string
 	ExcludeSources  []string
 	AllSources      bool
+	FastSources     bool
 	OnlyRecursive   bool
 	Timeout         int
 	MaxEnumTime     int

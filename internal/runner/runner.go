@@ -152,6 +152,7 @@ func New(opts *Options) (*Runner, error) {
 			Sources:         opts.Sources,
 			ExcludeSources:  opts.ExcludeSources,
 			AllSources:      opts.AllSources,
+			FastSources:     opts.FastSources,
 			OnlyRecursive:   opts.OnlyRecursive,
 			Timeout:         opts.SubdomainTimeout,
 			MaxEnumTime:     opts.MaxEnumTime,
@@ -886,8 +887,6 @@ func (r *Runner) shouldInclude(result *Result) bool {
 	// Apply duplicate filter (-fd)
 	if o.FilterDuplicates {
 		sig := fmt.Sprintf("%d|%d|%s|%s", result.StatusCode, result.ContentLength, result.Title, result.ContentType)
-		o := r.options
-		_ = o
 		r.dupsMu.Lock()
 		if r.seenDups == nil {
 			r.seenDups = make(map[string]bool)
@@ -1126,11 +1125,17 @@ func isWildcardResult(result *dns.Result, wildcardIPs []string) bool {
 
 // Conversion functions from engine types to runner Result
 func (run *Runner) convertDNSResult(dr *dns.Result) *Result {
-	// Skip results that have no records at all (unresolvable)
-	if len(dr.A) == 0 && len(dr.AAAA) == 0 && len(dr.CNAME) == 0 &&
+	// Skip results that have no records at all (unresolvable),
+	// UNLESS the user explicitly filtered by RCODE (-rc) — in that case
+	// preserve NXDOMAIN/SERVFAIL/REFUSED etc. so they are visible.
+	noRecords := len(dr.A) == 0 && len(dr.AAAA) == 0 && len(dr.CNAME) == 0 &&
 		len(dr.MX) == 0 && len(dr.NS) == 0 && len(dr.TXT) == 0 &&
-		len(dr.SOA) == 0 && len(dr.PTR) == 0 && len(dr.CAA) == 0 && len(dr.SRV) == 0 {
-		return nil
+		len(dr.SOA) == 0 && len(dr.PTR) == 0 && len(dr.CAA) == 0 && len(dr.SRV) == 0
+	if noRecords {
+		if dr.RCode == "" || dr.RCode == "NOERROR" {
+			return nil
+		}
+		// RCODE is a non-success — user explicitly asked to see it with -rc
 	}
 
 	result := &Result{

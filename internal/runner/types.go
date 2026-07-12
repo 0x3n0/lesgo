@@ -39,7 +39,7 @@ type Result struct {
 	IsCDN         bool                `json:"is_cdn,omitempty" csv:"is_cdn"`
 	CDNName       string              `json:"cdn_name,omitempty" csv:"cdn_name"`
 	ASN           *ASNInfo            `json:"asn,omitempty" csv:"-"`
-		TraceData	*TraceInfo	`json:"trace,omitempty" csv:"-"`
+	TraceData	*TraceInfo	`json:"trace,omitempty" csv:"-"`
 
 	// HTTP fields
 	StatusCode     int                 `json:"http_status_code,omitempty" csv:"http_status_code"`
