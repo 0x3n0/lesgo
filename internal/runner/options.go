@@ -755,7 +755,7 @@ func GetUpdateCallback() func() {
 			gologger.Fatal().Msgf("Could not check for updates: %s\n", err)
 		}
 		if latestVersion != Version {
-			gologger.Info().Msgf("New version available: %s (current: %s). Run: go install github.com/0x3n0/lesgo@latest\n", latestVersion, Version)
+			gologger.Info().Msgf("New version available: %s (current: %s). Run: go install github.com/0x3n0/lesgo/cmd/lesgo@latest\n", latestVersion, Version)
 		} else {
 			gologger.Info().Msgf("lesgo is up to date (%s)\n", Version)
 		}
