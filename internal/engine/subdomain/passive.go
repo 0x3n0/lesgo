@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -54,6 +56,19 @@ func New(opts Options) (*Engine, error) {
 	// Filter sources based on options
 	var selectedSources []sources.Source
 
+	// When -fast is active, auto-benchmark candidates and pick the fastest responders.
+	fastNames := make(map[string]struct{})
+	if opts.FastSources {
+		n := 3
+		if len(opts.Sources) > 0 {
+			n = len(opts.Sources) // respect explicit -sources count
+		}
+		for _, name := range selectFastestSources(session, n) {
+			fastNames[name] = struct{}{}
+		}
+		gologger.Info().Msgf("Auto-selected %d fast source(s): %v", len(fastNames), sortedKeys(fastNames))
+	}
+
 	specifiedSources := make(map[string]struct{})
 	for _, s := range opts.Sources {
 		specifiedSources[strings.ToLower(s)] = struct{}{}
@@ -75,8 +90,8 @@ func New(opts Options) (*Engine, error) {
 			if _, ok := specifiedSources[name]; ok {
 				selectedSources = append(selectedSources, source)
 			}
-		} else if opts.FastSources {
-			if isFastSource(name) {
+		} else if len(fastNames) > 0 {
+			if _, ok := fastNames[name]; ok {
 				selectedSources = append(selectedSources, source)
 			}
 		} else if opts.AllSources {
@@ -351,19 +366,92 @@ func (e *Engine) Close() {
 	// Nothing to clean up
 }
 
-// fastSources is the set of sources that use fast API calls (no web scraping).
-var fastSources = map[string]bool{
-	"crtsh":        true,
-	"alienvault":   true,
-	"certspotter":  true,
-	"anubis":       true,
-	"bufferover":   true,
-	"threatminer":  true,
-	"urlscan":      true,
-	"hackertarget": true,
+// fastSourceCandidates lists candidate API endpoints for auto-benchmarking.
+// Each entry maps a source name to its base URL for latency probing.
+var fastSourceCandidates = map[string]string{
+	"crtsh":       "https://crt.sh",
+	"alienvault":  "https://otx.alienvault.com",
+	"certspotter": "https://api.certspotter.com",
+	"anubis":      "https://jldc.me/anubis/subdomains/example.com",
+	"bufferover":  "https://tls.bufferover.run",
+	"threatminer": "https://api.threatminer.org",
+	"urlscan":     "https://urlscan.io",
+	"hackertarget":"https://api.hackertarget.com",
 }
 
-// isFastSource returns true if the named source is classified as fast.
-func isFastSource(name string) bool {
-	return fastSources[name]
+// selectFastestSources pings each fast-source candidate endpoint and returns the
+// names of the top N that responded fastest. Slow or unreachable sources are
+// automatically excluded. If no source responds, falls back to a minimal set.
+func selectFastestSources(session *sources.Session, topN int) []string {
+	type pingResult struct {
+		name    string
+		latency time.Duration
+	}
+
+	results := make(chan pingResult, len(fastSourceCandidates))
+
+	// Create a short-lived HTTP client for benchmarks
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSHandshakeTimeout: 3 * time.Second,
+		},
+	}
+
+	for name, url := range fastSourceCandidates {
+		go func(n, u string) {
+			start := time.Now()
+			resp, err := client.Get(u)
+			if err != nil {
+				return
+			}
+			resp.Body.Close()
+			results <- pingResult{n, time.Since(start)}
+		}(name, url)
+	}
+
+	// Collect all ping results with a hard timeout
+	pingTimeout := time.After(6 * time.Second)
+	var pings []pingResult
+
+	for i := 0; i < len(fastSourceCandidates); i++ {
+		select {
+		case r := <-results:
+			pings = append(pings, r)
+		case <-pingTimeout:
+			goto COLLECTED
+		}
+	}
+COLLECTED:
+
+	if len(pings) == 0 {
+		gologger.Warning().Msg("No fast-source candidates responded; falling back to crtsh only")
+		return []string{"crtsh"}
+	}
+
+	// Sort by latency (fastest first)
+	sort.Slice(pings, func(i, j int) bool {
+		return pings[i].latency < pings[j].latency
+	})
+
+	if len(pings) > topN {
+		pings = pings[:topN]
+	}
+
+	names := make([]string, len(pings))
+	for i, p := range pings {
+		names[i] = p.name
+	}
+
+	return names
+}
+
+// sortedKeys returns sorted string keys from a map for deterministic logging.
+func sortedKeys(m map[string]struct{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

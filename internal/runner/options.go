@@ -587,6 +587,10 @@ func (o *Options) RunSubdomain() bool {
 	if !o.hasDomainInput() {
 		return false
 	}
+	// -fast with stdin/pipe: treat piped hosts as direct targets, skip subdomain discovery
+	if o.FastSources && o.Stdin && len(o.Domains) == 0 && o.InputFile == "" {
+		return false
+	}
 	// DNS-only: skip subdomain discovery
 	if o.hasDNSFlags() && !o.hasHTTPBehaviorFlags() && !o.hasTakeoverFlags() {
 		return false
