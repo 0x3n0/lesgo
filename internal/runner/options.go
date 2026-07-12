@@ -344,7 +344,7 @@ Supports positional domain arguments (like httpx): lesgo domain.com [flags]`)
 		flagSet.StringSliceVarP(&opts.ExcludeSources, "exclude-sources", "es", nil, "sources to exclude from enumeration (-es alienvault)", goflags.NormalizedStringSliceOptions),
 		flagSet.BoolVar(&opts.OnlyRecursive, "recursive", false, "use only sources that can handle subdomains recursively"),
 		flagSet.BoolVar(&opts.AllSources, "all-sources", false, "use all sources for discovery (already default when discovery runs)"),
-			flagSet.BoolVar(&opts.FastSources, "fast", false, "use only the fastest API-based subdomain sources (skips slow scraping sources)"),
+		flagSet.BoolVar(&opts.FastSources, "fast", false, "fast mode: auto-select top 1-3 fastest API sources for discovery, or skip discovery with piped targets"),
 		flagSet.BoolVarP(&opts.ActiveSubdomain, "active", "nW", false, "display active subdomains only (resolve discovered subs)"),
 		flagSet.BoolVarP(&opts.ListSources, "list-sources", "ls", false, "list all available sources"),
 		flagSet.BoolVarP(&opts.CaptureSources, "collect-sources", "cs", false, "include all sources in the output (-json only)"),
