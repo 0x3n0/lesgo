@@ -20,6 +20,7 @@ Default (no engine flags): **subdomain discovery + HTTP probing**.
 |---|---|
 | `lesgo domain.com` (positional) | Subdomain discovery + HTTP probing |
 | `cat domains.txt \| lesgo` | Subdomain discovery + HTTP probing |
+| `cat domains.txt \| lesgo -fast` | HTTP probing only (skip slow subdomain discovery) |
 | `lesgo -l targets.txt` | Subdomain discovery + HTTP probing |
 | `lesgo -u https://target.com` | HTTP probing only (no subdomain discovery) |
 
@@ -35,6 +36,7 @@ Use HTTP probe flags to control displayed fields:
 | Mode | How to trigger |
 |---|---|
 | **Subdomain + HTTP** (default) | Positional domain, stdin, `-l`, or `-d` |
+| **Fast probe** (skip discovery) | `-fast` with stdin or `-u` |
 | **DNS only** | `-a`, `-mx`, `-ns`, `-cname`, `-txt`, etc. |
 | **Takeover only** | `-tk`, `--takeover-all` |
 | **Discovery + Takeover** | `-dt` |
@@ -51,7 +53,7 @@ Use HTTP probe flags to control displayed fields:
 | Subdomain discovery | `-sources`, `-es`, `-nW`, `-cs`, `-ls`, `-m sub`, `-f sub` |
 | Takeover | `-dt`, `-tk`, `-tk-cname`, `-tk-ns`, `-tk-html` |
 | Output | `-o file`, `-json`, `-csv`, `-md`, `-silent`, `-stats` |
-| Speed | `-t N`, `-rl N`, `-delay`, `-http-timeout` |
+| Speed | `-t N`, `-rl N`, `-delay`, `-http-timeout`, `-fast` |
 | Configs | `-r resolvers`, `-config`, `-resume` |
 
 ## Quick Examples
@@ -61,6 +63,10 @@ Use HTTP probe flags to control displayed fields:
 lesgo example.com -silent
 lesgo example.com -sc -td -title -silent
 cat domains.txt | lesgo -sc -silent
+
+# Fast probe: skip subdomain discovery, auto-select 1-3 fastest sources
+cat targets.txt | lesgo -fast -sc -title -silent
+lesgo example.com -fast -sc -silent
 
 # DNS - all record types
 lesgo example.com -a -mx -ns -cname -txt -cdn -asn -re
@@ -101,6 +107,9 @@ lesgo -l subs.txt -favicon -jarm -method -probe \
       -http2 -pipeline -vhost -tls-probe -csp-probe \
       -silent -json -o probes.json
 
+# Fast probe: skip subdomain discovery, ping fastest API sources
+cat subdomains.txt | lesgo -fast -sc -title -silent
+
 # Through proxy (Burp/ZAP)
 lesgo -l targets.txt -sc -title -server -ip -http-proxy http://127.0.0.1:8080 -duc
 ```
@@ -120,7 +129,7 @@ lesgo -l targets.txt -sc -title -server -ip -http-proxy http://127.0.0.1:8080 -d
 | **Subdomain** | `-sources`, `-es`, `-nW`, `-cs`, `-ls`, `-ei`, `-m`, `-f` |
 | **Takeover** | `-dt`, `-tk`, `--takeover-all`, `-tk-cname`, `-tk-ns`, `-tk-http` |
 | **Output** | `-o file`, `-json`, `-csv`, `-md`, `-silent`, `-stats`, `-nc` |
-| **Speed** | `-t N`, `-rl N`, `-rlm N`, `-delay`, `-http-timeout`, `-stream` |
+| **Speed** | `-t N`, `-rl N`, `-rlm N`, `-delay`, `-http-timeout`, `-stream`, `-fast` |
 | **Debug** | `-v`, `-version`, `-health-check`, `-si N`, `-resume`, `-sd` |
 | **Other** | `-r resolvers`, `-config`, `-duc` |
 

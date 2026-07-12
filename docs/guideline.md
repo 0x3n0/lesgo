@@ -34,12 +34,24 @@ Default engine behavior:
 | `lesgo hackerone.com -td` | ✅ | ✅ | + tech-detect |
 | `lesgo hackerone.com -sc -td -title` | ✅ | ✅ | Combined fields |
 | `cat targets.txt \| lesgo -sc` | ✅ | ✅ | Pipe mode |
+| `cat targets.txt \| lesgo -fast -sc` | ❌ (fast) | ✅ | Fast probe — skip subdomain discovery |
+| `lesgo example.com -fast -sc` | ✅ (fast) | ✅ | Fast discovery — only fastest 1-3 API sources |
 | `lesgo -l targets.txt -sc` | ✅ | ✅ | File mode |
 | `lesgo -u https://hackerone.com -sc` | ❌ direct | ✅ | Direct URL only |
 | `lesgo hackerone.com -a -cname -cdn -re` | ❌ DNS | ❌ | DNS only |
 | `lesgo hackerone.com -tk` | ❌ | ❌ | Takeover only |
 | `lesgo hackerone.com -dt` | ✅ | ❌ | Discovery + Takeover |
 | `lesgo` | - | - | Fatal input error |
+
+### Fast mode
+
+The `-fast` flag accelerates discovery in two ways:
+
+1. **Piped input / `-u` targets** — skips subdomain discovery entirely; treats input as direct probe targets.
+2. **Positional or `-d` domain** — runs fast subdomain discovery using only the top 1-3 fastest API-based sources (auto-benchmarked by pinging each candidate endpoint).
+
+Sources auto-benchmarked: `crtsh`, `alienvault`, `certspotter`, `anubis`, `bufferover`, `threatminer`, `urlscan`, `hackertarget`.
+Slow/unreliable sources are excluded: `dnsdumpster`, `rapiddns`, `sitedossier`, `commoncrawl`, `waybackarchive`, `threatcrowd`, `riddler`.
 
 `--all-sources` is already the default whenever subdomain discovery runs.
 
@@ -767,6 +779,11 @@ DISCOVER + HTTP (DEFAULT):
  lesgo domain.com -sc -td -title -silent
  cat targets.txt | lesgo -sc -silent
  lesgo -l targets.txt -sc -silent
+
+FAST PROBE (-fast):
+ cat targets.txt | lesgo -fast -sc -title -silent
+ lesgo domain.com -fast -sc -silent
+ cat scope.txt | lesgo -fast | lesgo -tk -silent
 
 DNS:
  lesgo domain.com -a -cname -cdn -asn -re
